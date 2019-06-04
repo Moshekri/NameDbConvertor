@@ -13,14 +13,17 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Google.Apis.Auth.OAuth2;
 using System.Threading;
+using NLog;
 
 namespace NameDbConvertor
 {
     public partial class Form1 : Form
     {
         DataView dv;
+        Logger logger;
         public Form1()
         {
+            logger = LogManager.GetCurrentClassLogger();
             InitializeComponent();
             textBox1.Enabled = false;
         }
@@ -103,41 +106,65 @@ namespace NameDbConvertor
             dataGridView1.DataSource = data;
         }
 
+
+        bool isInTranslationProcess;
+        Thread worker = null;
         private void Button3_Click(object sender, EventArgs e)
         {
 
-            Thread worker = new Thread(new ThreadStart(new Action(() =>
+            
+            if (!isInTranslationProcess)
             {
+                isInTranslationProcess = true;
+                btnTranslateAll.Text = "Stop Translating";
 
-                var creds = GoogleCredential.FromFile("cred\\cred.json");
-                TranslationClient client = TranslationClient.Create(creds);
-
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+            }
+            else if (isInTranslationProcess)
+            {
+                btnTranslateAll.Text = "Re-Translate All";
+                isInTranslationProcess = false;
+                if (worker.IsAlive)
                 {
-                    try
+                    worker.Abort();
+                }
+           
+            }
+            
+                worker = new Thread(new ThreadStart(new Action(() =>
                     {
-                        if (row.Cells[0].Value.ToString() != "")
+                        var creds = GoogleCredential.FromFile("cred\\cred.json");
+                        TranslationClient client = TranslationClient.Create(creds);
+
+                        foreach (DataGridViewRow row in dataGridView1.Rows)
                         {
-                            var result = client.TranslateText("נורית " + row.Cells[0].Value.ToString(), "en", "he");
-                            var word = result.TranslatedText.Substring(6).Trim();
-                            if (result.TranslatedText.Trim() != row.Cells[1].Value.ToString().Trim())
+                            try
                             {
-                                row.Cells[1].Value = word;
-                                row.DefaultCellStyle.BackColor = Color.Yellow;
+                                if (row.Cells[0].Value.ToString() != "")
+                                {
+                                    if (!isInTranslationProcess && worker.IsAlive)
+                                    {
+                                        worker.Abort();
+                                    }
+                                    var result = client.TranslateText("מיכאל " + row.Cells[0].Value.ToString(), "en", "he",TranslationModel.NeuralMachineTranslation);
+                                    var word = result.TranslatedText.Substring(7).Trim();
+                                    if (word != row.Cells[1].Value.ToString().Trim())
+                                    {
+                                        logger.Info($"Hebrew Name {row.Cells[0].Value.ToString()}:Changed From : {row.Cells[1].Value.ToString()} to : {word}");
+                                        row.Cells[1].Value = word;
+                                        row.DefaultCellStyle.BackColor = Color.Yellow;
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
+                                logger.Debug($"Inside worker function , {ex.Message}");
+                                client.Dispose();
                             }
                         }
-                    }
-                    catch (Exception)
-                    {
 
-                        throw;
-                    }
+                    })));
 
-                }
-
-
-
-            })));
 
             worker.Start();
 

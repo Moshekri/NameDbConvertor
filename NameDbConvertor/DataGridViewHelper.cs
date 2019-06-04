@@ -101,7 +101,7 @@ namespace NameDbConvertor
                 int keyboardLayout = GetKeyboardLayout(foregroundProcess).ToInt32() & 0xFFFF;
                 return new CultureInfo(keyboardLayout);
             }
-            catch (Exception _)
+            catch (Exception ex)
             {
                 return new CultureInfo(1033); // Assume English if something went wrong.
             }
