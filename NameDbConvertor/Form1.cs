@@ -76,6 +76,20 @@ namespace NameDbConvertor
                     }
 
                 }
+                else if (extention.ToLower().StartsWith(".csv"))
+                {
+                    try
+                    {
+                        newData = DataGridViewHelper.GetDataSourceFromCsvFile(filename);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+
+                }
                 dataGridView1.DataSource = DataGridViewHelper.MergeData(dataGridView1.DataSource, newData);
             }
 
@@ -112,7 +126,7 @@ namespace NameDbConvertor
         private void Button3_Click(object sender, EventArgs e)
         {
 
-            
+
             if (!isInTranslationProcess)
             {
                 isInTranslationProcess = true;
@@ -127,43 +141,43 @@ namespace NameDbConvertor
                 {
                     worker.Abort();
                 }
-           
-            }
-            
-                worker = new Thread(new ThreadStart(new Action(() =>
-                    {
-                        var creds = GoogleCredential.FromFile("cred\\cred.json");
-                        TranslationClient client = TranslationClient.Create(creds);
 
-                        foreach (DataGridViewRow row in dataGridView1.Rows)
+            }
+
+            worker = new Thread(new ThreadStart(new Action(() =>
+                {
+                    var creds = GoogleCredential.FromFile("cred\\cred.json");
+                    TranslationClient client = TranslationClient.Create(creds);
+
+                    foreach (DataGridViewRow row in dataGridView1.Rows)
+                    {
+                        try
                         {
-                            try
+                            if (row.Cells[0].Value.ToString() != "")
                             {
-                                if (row.Cells[0].Value.ToString() != "")
+                                if (!isInTranslationProcess && worker.IsAlive)
                                 {
-                                    if (!isInTranslationProcess && worker.IsAlive)
-                                    {
-                                        worker.Abort();
-                                    }
-                                    var result = client.TranslateText("מיכאל " + row.Cells[0].Value.ToString(), "en", "he",TranslationModel.NeuralMachineTranslation);
-                                    var word = result.TranslatedText.Substring(7).Trim();
-                                    if (word != row.Cells[1].Value.ToString().Trim())
-                                    {
-                                        logger.Info($"Hebrew Name {row.Cells[0].Value.ToString()}:Changed From : {row.Cells[1].Value.ToString()} to : {word}");
-                                        row.Cells[1].Value = word;
-                                        row.DefaultCellStyle.BackColor = Color.Yellow;
-                                    }
+                                    worker.Abort();
+                                }
+                                var result = client.TranslateText("מיכאל " + row.Cells[0].Value.ToString(), "en", "he", TranslationModel.NeuralMachineTranslation);
+                                var word = result.TranslatedText.Substring(7).Trim();
+                                if (word != row.Cells[1].Value.ToString().Trim())
+                                {
+                                    logger.Info($"Hebrew Name {row.Cells[0].Value.ToString()}:Changed From : {row.Cells[1].Value.ToString()} to : {word}");
+                                    row.Cells[1].Value = word;
+                                    row.DefaultCellStyle.BackColor = Color.Yellow;
                                 }
                             }
-                            catch (Exception ex)
-                            {
-
-                                logger.Debug($"Inside worker function , {ex.Message}");
-                                client.Dispose();
-                            }
                         }
+                        catch (Exception ex)
+                        {
 
-                    })));
+                            logger.Debug($"Inside worker function , {ex.Message}");
+                            client.Dispose();
+                        }
+                    }
+
+                })));
 
 
             worker.Start();

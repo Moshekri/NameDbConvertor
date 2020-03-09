@@ -13,81 +13,6 @@ namespace NameDbConvertor
 {
     public static class DataGridViewHelper
     {
-        public static void FilterView(DataView dv, string filter)
-        {
-            var ci = GetCurrentKeyboardLayout();
-
-            if (ci.KeyboardLayoutId == 1033)
-            {
-                dv.RowFilter = $"EnglishName LIKE '%{filter}%'";
-            }
-            else if (ci.KeyboardLayoutId == 1037)
-            {
-                dv.RowFilter = $"HebrewName LIKE '%{filter}%'";
-            }
-
-        }
-
-        public static DataView GetDataSourceFromTextFile(string filePath)
-        {
-
-
-            List<string> filterdLines = new List<string>();
-            var lines = File.ReadAllLines(filePath);
-            foreach (var line in lines)
-            {
-                if (line.Contains("| TranslationManager.TranslationManger | Debug  |  Hebrew First Name :"))
-                {
-                    filterdLines.Add(line);
-                }
-            }
-
-            DataTable dt = new DataTable("names");
-
-            dt.Columns.Add("HebrewName");
-            dt.Columns.Add("EnglishName");
-            dt.PrimaryKey = new DataColumn[] { dt.Columns[0] };
-            foreach (var line in filterdLines)
-            {
-                var data = ParseLine(line);
-                if (dt.Rows.Find(data[0]) == null)
-                {
-                    dt.Rows.Add(ParseLine(line));
-
-                }
-            }
-            return new DataView(dt);
-        }
-
-        private static string[] ParseLine(string line)
-        {
-            string data = line.Split('|')[4];
-            string hebrewName = data.Split(',')[0].Split(':')[1].Trim();
-            string englishNamePart = data.Split(',')[1];
-            int last = englishNamePart.IndexOf("Phonetic");
-            string temp = englishNamePart.Substring(0, last);
-            string englishName = temp.Split(':')[1].Trim();
-
-
-            return new string[] { hebrewName, englishName };
-        }
-        public static DataView GetDataSourceFromBinFile(string filePath)
-        {
-            var data = GetDataFromDbFile(filePath);
-            DataTable dt;
-            DataView dv;
-            dt = new DataTable("names");
-            dt.Columns.Add("HebrewName");
-            dt.Columns.Add("EnglishName");
-            dt.PrimaryKey = new DataColumn[] { dt.Columns[0] };
-            foreach (var item in data)
-            {
-                dt.Rows.Add(new string[] { item.Key, item.Value });
-            }
-
-            dv = new DataView(dt);
-            return dv;
-        }
 
         [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hwnd, IntPtr proccess);
@@ -106,6 +31,141 @@ namespace NameDbConvertor
                 return new CultureInfo(1033); // Assume English if something went wrong.
             }
         }
+        public static void FilterView(DataView dv, string filter)
+        {
+            var ci = GetCurrentKeyboardLayout();
+
+            if (ci.KeyboardLayoutId == 1033)
+            {
+                dv.RowFilter = $"EnglishName LIKE '%{filter}%'";
+            }
+            else if (ci.KeyboardLayoutId == 1037)
+            {
+                dv.RowFilter = $"HebrewName LIKE '%{filter}%'";
+            }
+
+        }
+
+
+        public static DataView GetDataSourceFromTextFile(string filePath)
+        {
+            List<string> filterdLines = new List<string>();
+            var lines = File.ReadAllLines(filePath);
+            foreach (var line in lines)
+            {
+                if (line.Contains("| TranslationManager.TranslationManger | Debug  |  Hebrew First Name :"))
+                {
+                    filterdLines.Add(line);
+                }
+            }
+
+            DataTable dt = new DataTable("names");
+
+            dt.Columns.Add("HebrewName");
+            dt.Columns.Add("EnglishName");
+            dt.PrimaryKey = new DataColumn[] { dt.Columns[0] };
+            foreach (var line in filterdLines)
+            {
+                // var splittedLine = 
+
+                var data = ParseLine(line);
+                string[] splittedHebrew = data[0].Split(new char[] { ',', ' ', '-' });
+                string[] splittedEnglish = data[1].Split(new char[] { ',', ' ', '-' });
+                if (splittedHebrew.Length > 1)
+                {
+                    try
+                    {
+                        dt.Rows.Add(new string[] { splittedHebrew[0].Trim(), splittedEnglish[0].Trim() });
+                        if (splittedHebrew.Length > 1 && splittedEnglish.Length > 1)
+                        {
+                            dt.Rows.Add(new string[] { splittedHebrew[1].Trim(), splittedEnglish[1].Trim() });
+                        }
+                        continue;
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                }
+
+
+                if (dt.Rows.Find(data[0]) == null)
+                {
+                    try
+                    {
+                        dt.Rows.Add(ParseLine(line));
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+
+                }
+            }
+            return new DataView(dt);
+        }
+        public static DataView GetDataSourceFromBinFile(string filePath)
+        {
+            var data = GetDataFromDbFile(filePath);
+            DataTable dt;
+            DataView dv;
+            dt = new DataTable("names");
+            dt.Columns.Add("HebrewName");
+            dt.Columns.Add("EnglishName");
+            dt.PrimaryKey = new DataColumn[] { dt.Columns[0] };
+            foreach (var item in data)
+            {
+                dt.Rows.Add(new string[] { item.Key, item.Value });
+            }
+
+            dv = new DataView(dt);
+            return dv;
+        }
+        public static DataView GetDataSourceFromCsvFile(string filePath)
+        {
+            var lines = File.ReadAllLines(filePath);
+            DataTable dt;
+            DataView dv;
+            dt = new DataTable("names");
+            dt.Columns.Add("HebrewName");
+            dt.Columns.Add("EnglishName");
+            dt.PrimaryKey = new DataColumn[] { dt.Columns[0] };
+            foreach (var item in lines)
+            {
+                var row = item.Split(',');
+                var hebrewSplit = row[0].Trim().Split(new char[] { ',', '-', ' ' });
+                var englishSplit = row[1].Trim().Split(new char[] { ',', '-', ' ' });
+                if (hebrewSplit.Length > 1)
+                {
+                    try
+                    {
+                        dt.Rows.Add(new string[] { hebrewSplit[0].Trim(), englishSplit[0] });
+                        dt.Rows.Add(new string[] { hebrewSplit[1].Trim(), englishSplit[1] });
+                    }
+                    catch (Exception ex)
+                    {
+                        continue;
+
+                    }
+
+                    continue;
+                }
+                try
+                {
+                    dt.Rows.Add(new string[] { row[0].Trim(), row[1].Trim() });
+
+                }
+                catch (Exception)
+                {
+
+                    continue;
+
+                }
+            }
+
+            dv = new DataView(dt);
+            return dv;
+        }
 
         internal static DataView MergeData(object currenatData, DataView newData)
         {
@@ -117,11 +177,15 @@ namespace NameDbConvertor
             var data = currenatData as DataView;
             foreach (DataRow row in newData.Table.Rows)
             {
-                var result = data.Table.Rows.Find(row[0]);
-                if (result == null)
+                if (data.Table != null)
                 {
-                    data.Table.Rows.Add(row[0],row[1]);
+                    var result = data.Table.Rows.Find(row[0]);
+                    if (result == null)
+                    {
+                        data.Table.Rows.Add(row[0], row[1]);
+                    }
                 }
+
             }
             return data;
 
@@ -153,8 +217,7 @@ namespace NameDbConvertor
             }
 
         }
-
-        public static void SaveBinFile(DataView data,string filePath)
+        public static void SaveBinFile(DataView data, string filePath)
         {
             Dictionary<string, string> dict = new Dictionary<string, string>();
             DataTable dt = data.ToTable();
@@ -165,20 +228,32 @@ namespace NameDbConvertor
                 {
                     dict.Add(row[0].ToString(), row[1].ToString());
                 }
-                
+
             }
 
             BinaryFormatter bf = new BinaryFormatter();
             using (var fs = File.Create(filePath))
             {
                 bf.Serialize(fs, dict);
-                            }
+            }
 
 
 
 
 
 
+        }
+        private static string[] ParseLine(string line)
+        {
+            string data = line.Split('|')[4];
+            string hebrewName = data.Split(',')[0].Split(':')[1].Trim();
+            string englishNamePart = data.Split(',')[1];
+            int last = englishNamePart.IndexOf("Phonetic");
+            string temp = englishNamePart.Substring(0, last);
+            string englishName = temp.Split(':')[1].Trim();
+
+
+            return new string[] { hebrewName, englishName };
         }
     }
 }
