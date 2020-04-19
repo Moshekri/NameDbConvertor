@@ -88,20 +88,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AdtLogDataExtractor.cs" />
-    <Compile Include="BinDataExtractor.cs" />
-    <Compile Include="BinDataReader.cs" />
-    <Compile Include="CsvDataExtractor.cs" />
-    <Compile Include="DataGridViewHelper.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="DataExtraxtors\AdtLogDataExtractor.cs" />
+    <Compile Include="DataExtraxtors\BinDataExtractor.cs" />
+    <Compile Include="DataExtraxtors\CsvDataExtractor.cs" />
+    <Compile Include="Helpers\DataGridViewHelper.cs" />
+    <Compile Include="Forms\Form1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
+    <Compile Include="Forms\Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Form1.resx">
+    <Compile Include="Helpers\StringNormalizer.cs" />
+    <EmbeddedResource Include="Forms\Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">

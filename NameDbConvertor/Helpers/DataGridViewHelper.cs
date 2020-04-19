@@ -51,7 +51,8 @@ namespace NameDbConvertor
         }
         public static DataView GetDataSourceFromBinFile(string filePath)
         {
-            return BinDataExtractor.GetDataSourceFromBinFile(filePath);
+            var b = BinDataExtractor.GetInstance();
+            return b.GetDataSourceFromBinFile(filePath);
         }
         public static DataView GetDataSourceFromCsvFile(string filePath)
         {
