@@ -50,6 +50,8 @@ namespace NameDbConvertor
 
             foreach (var filename in filefullname)
             {
+                
+
                 if (extention.ToLower().StartsWith(".bin"))
                 {
                     try
@@ -90,7 +92,7 @@ namespace NameDbConvertor
 
 
                 }
-                dataGridView1.DataSource = DataGridViewHelper.MergeData(dataGridView1.DataSource, newData);
+                dataGridView1.DataSource = DataGridViewHelper.MergeData(dataGridView1.DataSource as DataView, newData);
             }
 
             dv = dataGridView1.DataSource as DataView;
@@ -98,6 +100,8 @@ namespace NameDbConvertor
             lblTotal.Text = dv.Count.ToString();
         }
 
+
+        //save bin file
         private void Button1_Click(object sender, EventArgs e)
         {
             SaveFileDialog sfd = new SaveFileDialog();
@@ -113,6 +117,7 @@ namespace NameDbConvertor
 
         }
 
+        //clear all records
         private void Button2_Click(object sender, EventArgs e)
         {
             var data = (dataGridView1.DataSource as DataView);
@@ -123,6 +128,7 @@ namespace NameDbConvertor
 
         bool isInTranslationProcess;
         Thread worker = null;
+        //translate all records
         private void Button3_Click(object sender, EventArgs e)
         {
 
@@ -192,7 +198,6 @@ namespace NameDbConvertor
             }
             else
             {
-
                 dataGridView1.FirstDisplayedScrollingRowIndex = row.Index;
 
             }
