@@ -37,13 +37,13 @@ namespace NameDbConvertor
         }
 
 
-
+       
         private StringBuilder sb = new StringBuilder();
 
         public DataView GetDataSourceFromBinFile(string filePath)
         {
             var data = GetDataFromDbFile(filePath);
-
+            FileStyleUriParser jj;
             foreach (var pair in data)
                 try
                 {
